@@ -768,7 +768,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity * LengthUnits;
 
     if (RadiativeTransferXDRCooling)
-      if (type == 4)
+      if (type == 4 || type == 5)
 	BaryonField[XFluxNum][index] += (*PP)->Photons;
 	
 
