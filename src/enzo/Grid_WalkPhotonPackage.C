@@ -225,10 +225,19 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       sigma[i] = FindCrossSection(i, (*PP)->Energy) * LengthUnits;
     nSecondaryHII = (*PP)->Energy / 13.6;
     nSecondaryHeII = (*PP)->Energy / 24.6; 
+  } else if ((*PP)->Type == 5) {
+    for (i = 0; i < 3; i++)
+      sigma[i] = FindCrossSection(i, (*PP)->Energy) * LengthUnits;
   }
 
-  MinTauIfront = MIN_TAU_IFRONT / sigma[0];  // absorb sigma
-  tau_delete = TAU_DELETE_PHOTON / sigma[0];
+  // absorb sigma into constant
+  if ((*PP)->Type == 5) {
+    MinTauIfront = LengthUnits * MIN_TAU_IFRONT / sigma[0];
+    tau_delete = 1e35; // don't delete by optical depth for spec.table
+  } else {
+    MinTauIfront = MIN_TAU_IFRONT / sigma[0];
+    tau_delete = TAU_DELETE_PHOTON / sigma[0];
+  }
 
   // solid angle associated with package (= 4 Pi/N_package[on this level]) 
   float n_on_this_level = (float) (12 * (2 << (2*(*PP)->level-1)));
@@ -704,7 +713,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
 	// units are 1/s *TimeUnits
 	BaryonField[kphNum[i]][index] += dP1 * factor1; 
-	
+
 	// units are eV/s *TimeUnits;
 	// the spectrum table returns the mean energy of the spectrum at this column density
 	BaryonField[gammaNum][index] += dP1 * factor1 * 
@@ -728,14 +737,12 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
     } // ENDSWITCH type
 
-    if (type != iH2I && type != 5)
-
     /* Keep track of the maximum hydrogen photo-ionization rate in the
        I-front, so we can calculate the maximum ionization timescale
        for timestepping purposes. */
 
     if (RadiativeTransferHIIRestrictedTimestep)
-      if (type == iHI || type == 4) {
+      if (type == iHI || type == 4 || type == 5) {
 	if ((*PP)->ColumnDensity > MinTauIfront) {
 	  if (BaryonField[kphNum[iHI]][index] > this->MaximumkphIfront) {
 	    this->MaximumkphIfront = BaryonField[kphNum[iHI]][index];
@@ -753,7 +760,15 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[RPresNum1+dim][index] += 
 	  RadiationPressureConversion * RadiationPressureScale * dP * (*PP)->Energy / 
 	  density[index] * dir_vec[dim];
-    
+
+    /* Flux entering the cell */
+
+    if (RadiativeTransferXDRCooling)
+      if (type == 4 || type == 5)
+	BaryonField[XFluxNum][index] += (*PP)->Photons * slice_factor2;
+
+    /* Update ray properties */
+	
     (*PP)->CurrentTime += cdt;
     (*PP)->Photons     -= dP;
     (*PP)->Radius      += ddr;
@@ -766,11 +781,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity;
       else
 	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity * LengthUnits;
-
-    if (RadiativeTransferXDRCooling)
-      if (type == 4 || type == 5)
-	BaryonField[XFluxNum][index] += (*PP)->Photons;
-	
 
     // return in case we're pausing to merge
     if (PauseMe)
