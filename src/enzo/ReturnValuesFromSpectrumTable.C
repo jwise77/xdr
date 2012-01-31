@@ -49,9 +49,8 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
   float frac_in = 0.0, frac_out = 0.0, photon_fraction = 0.0, mean_energy;
   float change, tau;
   float logC_start, logC_end, logC_step, logC_in, logC_out;
-  FLOAT pseudo_CrossSection;
 
-  int nbins  = RadiativeTransferSpectrumTable.NumberOfColumnDensityBins;
+  const int nbins  = RadiativeTransferSpectrumTable.NumberOfColumnDensityBins;
   logC_start = log(RadiativeTransferSpectrumTable.columndensity_table[0]);
   logC_end   = log(RadiativeTransferSpectrumTable.columndensity_table[nbins-1]);
   logC_step  = (logC_end - logC_start) / (nbins-1);
@@ -61,8 +60,8 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
   logC_in   = log(ColumnDensity);
   logC_out  = log(ColumnDensity + dColumnDensity);
 
-  index_in  = min(nbins-1, max(1, int((logC_in  - logC_start)/logC_step)+1));
-  index_out = min(nbins-1, max(1, int((logC_out - logC_start)/logC_step)+1));
+  index_in  = min(nbins-1, max(0, int((logC_in  - logC_start)/logC_step)+1));
+  index_out = min(nbins-1, max(0, int((logC_out - logC_start)/logC_step)+1));
 
   /* find mean energy */
   
@@ -88,15 +87,17 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
     /* tau = dColumnDensity * FindCrossSection(0, mean_energy), but we cannot use this!
        instead, we find the proportionality constant near ColumnDensity using
        frac_in = exp(-pseudo_CrossSection * ColumnDensity) */
+
+    // JHW: Calculated in ReadRadiativeTransferSpectrumTable.C now
     
-    pseudo_CrossSection = -log(frac_in) / 
-      max(ColumnDensity, RadiativeTransferSpectrumTable.columndensity_table[0]);
+//    pseudo_CrossSection = -log(frac_in) / 
+//      max(ColumnDensity, RadiativeTransferSpectrumTable.columndensity_table[0]);
 
     /* expf(-tau) = frac_out / frac_in, below is to avoid cases such as frac_in = 0.0 */
 
     change = frac_out / frac_in;
     tau = (isnan(change)) ? 
-      dColumnDensity * pseudo_CrossSection : -log(frac_out / frac_in);   
+      dColumnDensity * RadiativeTransferSpectrumTable.pseudo_CrossSection[mode] : -log(change);
 
     /* return photon_fraction */
 
@@ -105,10 +106,11 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
     else if (tau > 1.e-4) 
       photon_fraction = min(1 - frac_out / frac_in, 1.0);
     else
-      photon_fraction = min(dColumnDensity * pseudo_CrossSection, 1.0);  
+      photon_fraction = min(dColumnDensity * RadiativeTransferSpectrumTable.pseudo_CrossSection[mode], 1.0);  
 
-//    fprintf(stderr, "RVFST: id_in = %d, id_out = %d, f_in =%f, f_out = %f, tau = %f, photon_f = %f\n", 
-//	    index_in, index_out, frac_in, frac_out, tau, photon_fraction); 
+//    if (index_in==0 && index_out==0)
+//    fprintf(stderr, "RVFST: id_in = %d, id_out = %d, f_in =%f(%g), f_out = %f(%g), tau = %f, photon_f = %f\n", 
+//	    index_in, index_out, frac_in, ColumnDensity, frac_out, ColumnDensity+dColumnDensity, tau, photon_fraction); 
 
     return photon_fraction;
 

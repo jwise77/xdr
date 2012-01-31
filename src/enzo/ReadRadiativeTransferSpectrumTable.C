@@ -76,6 +76,24 @@ int ReadRadiativeTransferSpectrumTable(float TemperatureUnits, float LengthUnits
       }
   }
 
+  // Calculate "pseudo cross-section" from table.  First search where
+  // tau ~ 1.0, then estimate cross-section from that entry.
+
+  int n = 0;
+  float f0, f1, stopf;
+  f0 = RadiativeTransferSpectrumTable.fractionphotons_table[0][0];
+  stopf = f0 / M_E;
+  do {
+    f1 = RadiativeTransferSpectrumTable.fractionphotons_table[0][n++];
+  } while (f1 > stopf);
+
+  for (i = 0; i < 3; i++)
+    RadiativeTransferSpectrumTable.pseudo_CrossSection[i] = 
+      (RadiativeTransferSpectrumTable.fractionphotons_table[i][0] -
+       RadiativeTransferSpectrumTable.fractionphotons_table[i][n]) /
+      (RadiativeTransferSpectrumTable.columndensity_table[n] -
+       RadiativeTransferSpectrumTable.columndensity_table[0]);
+
   fclose(fptr);
 
 

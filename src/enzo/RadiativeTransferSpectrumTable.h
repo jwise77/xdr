@@ -12,5 +12,6 @@ struct RadiativeTransferSpectrumTableType
   float *columndensity_table;
   float *fractionphotons_table[3];
   float *meanenergy_table;
+  float pseudo_CrossSection[3];
 
 };
