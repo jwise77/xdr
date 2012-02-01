@@ -364,7 +364,8 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	 is done for the entire current grid, not just it's boundaries.
 	 (skip density since we did it already) */
 
-      if (FieldType[field] != Density && FieldType[field] != DebugField) {
+      if (FieldType[field] != Density && FieldType[field] != DebugField &&
+	  FieldType[field] != ColumnDensity) {
 	//      if (FieldType[field] != Density) {
 	FORTRAN_NAME(interpolate)(&GridRank,
 				  ParentTemp[field], ParentTempDim,
