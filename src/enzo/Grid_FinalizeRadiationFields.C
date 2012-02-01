@@ -58,6 +58,8 @@ int grid::FinalizeRadiationFields(void)
   IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
 				  kphHeIINum, kdissH2INum);
 
+  int ColDensNum = FindField(ColumnDensity, FieldType, NumberOfBaryonFields);
+  int RaySegNum = FindField(RaySegments, FieldType, NumberOfBaryonFields);
   int XFluxNum = FindField(XRayFlux, FieldType, NumberOfBaryonFields);
 
   /* Get units. */
@@ -104,6 +106,16 @@ int grid::FinalizeRadiationFields(void)
 	index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
 	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
 	  BaryonField[XFluxNum][index] *= CellAreaInv;
+	} // ENDFOR i
+      } // ENDFOR j
+  }
+
+  if (RadiativeTransferColumnDensityField) {
+    for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
+      for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
+	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
+	  BaryonField[ColDensNum][index] /= BaryonField[RaySegNum][index];
 	} // ENDFOR i
       } // ENDFOR j
   }

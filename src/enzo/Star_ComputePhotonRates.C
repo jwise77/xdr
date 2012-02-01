@@ -28,7 +28,7 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 
-float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity, int mode);
+float ReturnEnergyFromSpectrumTable(float ColumnDensity, float dColumnDensity);
 
 int Star::ComputePhotonRates(int &nbins, float E[], double Q[])
 {
@@ -149,7 +149,7 @@ int Star::ComputePhotonRates(int &nbins, float E[], double Q[])
 
     if (RadiativeTransferTraceSpectrum == TRUE) {
       nbins = 1;
-      E[0] = ReturnValuesFromSpectrumTable(0.0, 0.0, 3); //##### mean energy if column density=0
+      E[0] = ReturnEnergyFromSpectrumTable(0.0, 0.0); //##### mean energy if column density=0
       E[1] = 0.0;
       E[2] = 0.0;
       E[3] = 0.0;

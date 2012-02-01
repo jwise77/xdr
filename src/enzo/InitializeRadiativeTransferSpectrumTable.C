@@ -27,8 +27,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
-int ReadRadiativeTransferSpectrumTable(float TemperatureUnits, float LengthUnits, 
-				       float aUnits, float DensityUnits, float TimeUnits);
+int ReadRadiativeTransferSpectrumTable(void);
  
 int InitializeRadiativeTransferSpectrumTable(FLOAT Time)
 {
@@ -58,13 +57,7 @@ int InitializeRadiativeTransferSpectrumTable(FLOAT Time)
 
   /* Read spectrum table */
 
-  if (RadiativeTransferTraceSpectrum == TRUE) {
-    if (ReadRadiativeTransferSpectrumTable(TemperatureUnits, LengthUnits, aUnits, 
-					   DensityUnits, TimeUnits) == FAIL) {
-      ENZO_FAIL("Error in ReadRadiativeTransferSpectrumTable.\n");
-
-    }
-  }
+  ReadRadiativeTransferSpectrumTable();
 
   return SUCCESS;
 }

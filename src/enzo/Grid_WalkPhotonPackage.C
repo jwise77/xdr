@@ -37,6 +37,9 @@
 int SplitPhotonPackage(PhotonPackageEntry *PP);
 FLOAT FindCrossSection(int type, float energy);
 float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity, int mode);
+int ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
+				  float result[]);
+float test_fn(int mode);
 
 int grid::WalkPhotonPackage(PhotonPackageEntry **PP, 
 			    grid **MoveToGrid, grid *ParentGrid, grid *CurrentGrid, 
@@ -68,9 +71,9 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   int cindex;
   float m[3], slice_factor, slice_factor2, sangle_inv;
   float MinTauIfront, PhotonEscapeRadius[3], c, c_inv, tau;
-  float DomainWidth[3], dx, dx2, dxhalf, fraction, dColumnDensity;
+  float DomainWidth[3], dx, dx2, dxhalf, fraction;
   float shield1, shield2, solid_angle, midpoint, nearest_edge;
-  float tau_delete, flux_floor;
+  float tau_delete, flux_floor, avg_energy, dColumnDensity;
   double dN;
   FLOAT radius, oldr, cdt, dr;
   FLOAT CellVolume = 1, Volume_inv, Area_inv, SplitCriteron, SplitWithinRadius;
@@ -695,20 +698,23 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       // at the moment, secondary ionization is ignored (Alvarez & Kim 2010)
     case 5:
 
+      float values[4];
       dP = dN = 0.0;
       for (i = 0; i < 4; i++) dPXray[i] = 0.0;
 
       // calculate dColumnDensity of this ray segment (only for the main absorber, HI)     
       thisDensity = PopulationFractions[0] * fields[0][index] * 
-	ConvertToProperNumberDensity; 
+      	ConvertToProperNumberDensity; 
       dColumnDensity = thisDensity * ddr * LengthUnits;
+      ReturnValuesFromSpectrumTable((*PP)->ColumnDensity, dColumnDensity, values);
       
       /* Loop over absorbers */
+
       for (i = 0; i < 3; i++) {   //##### for TraceSpectrum test 3 -> 1
 
 	// the spectrum table returns the fraction of photons absorbed at this column density
-	dPXray[i] = (*PP)->Photons * 
-	  ReturnValuesFromSpectrumTable((*PP)->ColumnDensity, dColumnDensity, i);
+	dPXray[i] = (*PP)->Photons * values[i];
+
 	dP1 = dPXray[i] * slice_factor2;
 
 	// units are 1/s *TimeUnits
@@ -716,9 +722,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
 	// units are eV/s *TimeUnits;
 	// the spectrum table returns the mean energy of the spectrum at this column density
-	BaryonField[gammaNum][index] += dP1 * factor1 * 
-	  ( ReturnValuesFromSpectrumTable((*PP)->ColumnDensity, dColumnDensity, 3) - 
-	    EnergyThresholds[i] );
+	BaryonField[gammaNum][index] += dP1 * factor1 * ( values[3] - EnergyThresholds[i] );
 
       }
 
@@ -773,14 +777,14 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     (*PP)->Photons     -= dP;
     (*PP)->Radius      += ddr;
 
-    if (RadiativeTransferLoadBalance)
+    if (RadiativeTransferLoadBalance || RadiativeTransferColumnDensityField)
       BaryonField[RaySegNum][index] += 1.0;
 
     if (RadiativeTransferColumnDensityField)
       if (type == 5)
-	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity;
+	BaryonField[ColDensNum][index] += (*PP)->ColumnDensity;
       else
-	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity * LengthUnits;
+	BaryonField[ColDensNum][index] += (*PP)->ColumnDensity * LengthUnits;
 
     // return in case we're pausing to merge
     if (PauseMe)
