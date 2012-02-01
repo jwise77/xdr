@@ -78,7 +78,7 @@ int RadiativeTransferInitialize(char *ParameterFile,
 
     /* Check for radiation fields and delete them */
 
-    NumberOfObsoleteFields = 7;
+    NumberOfObsoleteFields = 10;
     ObsoleteFields[0] = kphHI;
     ObsoleteFields[1] = PhotoGamma;
     ObsoleteFields[2] = kphHeI;
@@ -86,6 +86,9 @@ int RadiativeTransferInitialize(char *ParameterFile,
     ObsoleteFields[4] = gammaHeI;
     ObsoleteFields[5] = gammaHeII;
     ObsoleteFields[6] = kdissH2I;
+    ObsoleteFields[7] = ColumnDensity;
+    ObsoleteFields[8] = XRayFlux;
+    ObsoleteFields[9] = RaySegments;
 
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
       for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
@@ -162,7 +165,7 @@ int RadiativeTransferInitialize(char *ParameterFile,
 	TypesToAdd[FieldsToAdd++] = Metallicity;
 	AddedMetallicity = true;
       }
-      if (RadiativeTransferLoadBalance)
+      if (RadiativeTransferLoadBalance || RadiativeTransferColumnDensityField)
 	TypesToAdd[FieldsToAdd++] = RaySegments;
       if (RadiativeTransferColumnDensityField)
 	TypesToAdd[FieldsToAdd++] = ColumnDensity;
@@ -333,8 +336,13 @@ int RadiativeTransferInitialize(char *ParameterFile,
     ObsoleteFields[2] = kphHeI;
     ObsoleteFields[3] = kphHeII;
   }
-  if (RadiativeTransferLoadBalance == FALSE)
+  if (RadiativeTransferLoadBalance == FALSE &&
+      RadiativeTransferColumnDensityField == FALSE)
     ObsoleteFields[NumberOfObsoleteFields++] = RaySegments;
+  if (RadiativeTransferXDRCooling == FALSE)
+    ObsoleteFields[NumberOfObsoleteFields++] = XRayFlux;
+  if (RadiativeTransferColumnDensityField == FALSE)
+    ObsoleteFields[NumberOfObsoleteFields++] = ColumnDensity;
 
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
     for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)

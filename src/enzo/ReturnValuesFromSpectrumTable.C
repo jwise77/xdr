@@ -18,7 +18,7 @@
 /                              by the absorber species HI, HeI, HeII
 /            for mode = 3    : the mean energy of the spectrum
 /
-/************************************************************************/
+*************************************************************************/
 
 #ifdef TRANSFER
 
@@ -35,50 +35,67 @@
 #include "Grid.h"
 #include "CosmologyParameters.h"
 
-FLOAT FindCrossSection(int type, float energy);
-
-float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity, 
-				    int mode)
+float ReturnEnergyFromSpectrumTable(float ColumnDensity, float dColumnDensity)
 {
 
-  if (mode < 0 || mode > 3) {
-    ENZO_FAIL("ReturnValuesFromSpectrumTable: mode unrecognized\n");
-  }
-    
   int index_in, index_out;
-  float frac_in = 0.0, frac_out = 0.0, photon_fraction = 0.0, mean_energy;
-  float change, tau;
+  float mean_energy;
   float logC_start, logC_end, logC_step, logC_in, logC_out;
 
-  const int nbins  = RadiativeTransferSpectrumTable.NumberOfColumnDensityBins;
-  logC_start = log(RadiativeTransferSpectrumTable.columndensity_table[0]);
-  logC_end   = log(RadiativeTransferSpectrumTable.columndensity_table[nbins-1]);
+  int nbins  = RadiativeTransferSpectrumTable.NumberOfColumnDensityBins;
+  logC_start = logf(RadiativeTransferSpectrumTable.columndensity_table[0]);
+  logC_end   = logf(RadiativeTransferSpectrumTable.columndensity_table[nbins-1]);
   logC_step  = (logC_end - logC_start) / (nbins-1);
 
   /* calculate indices for ColumnDensity and ColumnDensity+dColumnDensity */
 
-  logC_in   = log(ColumnDensity);
-  logC_out  = log(ColumnDensity + dColumnDensity);
+  if (ColumnDensity > 0) {
+    logC_in   = logf(ColumnDensity);
+    index_in  = min(nbins-1, max(0, int((logC_in  - logC_start)/logC_step)));
+  } else {
+    index_in = 0;
+  }
 
-  index_in  = min(nbins-1, max(0, int((logC_in  - logC_start)/logC_step)+1));
-  index_out = min(nbins-1, max(0, int((logC_out - logC_start)/logC_step)+1));
+  logC_out  = logf(ColumnDensity + dColumnDensity);
+  index_out = min(nbins-1, max(0, int((logC_out - logC_start)/logC_step)));
 
-  /* find mean energy */
-  
   mean_energy = RadiativeTransferSpectrumTable.meanenergy_table[index_in];
+  return mean_energy;
 
-  /* return values */
+}
 
-  if (mode == 3) {
+int ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
+				  float result[])
+{
 
-    return mean_energy;
+  int index_in, index_out, bin;
+  float frac_in = 0.0, frac_out = 0.0, photon_fraction = 0.0;
+  float mean_energy, change, tau;
+  float logC_start, logC_end, logC_step, logC_in, logC_out;
 
-  } else if (mode >= 0 && mode <= 2) {
+  int nbins  = RadiativeTransferSpectrumTable.NumberOfColumnDensityBins;
+  logC_start = logf(RadiativeTransferSpectrumTable.columndensity_table[0]);
+  logC_end   = logf(RadiativeTransferSpectrumTable.columndensity_table[nbins-1]);
+  logC_step  = (logC_end - logC_start) / (nbins-1);
+
+  /* calculate indices for ColumnDensity and ColumnDensity+dColumnDensity */
+
+  if (ColumnDensity > 0) {
+    logC_in   = logf(ColumnDensity);
+    index_in  = min(nbins-1, max(0, int((logC_in  - logC_start)/logC_step)));
+  } else {
+    index_in = 0;
+  }
+
+  logC_out  = logf(ColumnDensity + dColumnDensity);
+  index_out = min(nbins-1, max(0, int((logC_out - logC_start)/logC_step)));
+
+  for (bin = 0; bin < 3; bin++) {
 
     /* find photons left for ColumnDensity and ColumnDensity+dColumnDensity */
 
-    frac_in  = RadiativeTransferSpectrumTable.fractionphotons_table[mode][index_in];
-    frac_out = RadiativeTransferSpectrumTable.fractionphotons_table[mode][index_out];
+    frac_in  = RadiativeTransferSpectrumTable.fractionphotons_table[bin][index_in];
+    frac_out = RadiativeTransferSpectrumTable.fractionphotons_table[bin][index_out];
 
     /* find fraction of photons absorbed by species w.r.t. the incoming number of photons;
        using the same logic for tau in Grid_WalkPhotonPackage, if "change" is smaller 
@@ -90,72 +107,37 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
 
     // JHW: Calculated in ReadRadiativeTransferSpectrumTable.C now
     
-//    pseudo_CrossSection = -log(frac_in) / 
-//      max(ColumnDensity, RadiativeTransferSpectrumTable.columndensity_table[0]);
+    //float pseudo_CrossSection = -log(frac_in) / 
+    //  max(ColumnDensity, RadiativeTransferSpectrumTable.columndensity_table[0]);
 
     /* expf(-tau) = frac_out / frac_in, below is to avoid cases such as frac_in = 0.0 */
 
     change = frac_out / frac_in;
     tau = (isnan(change)) ? 
-      dColumnDensity * RadiativeTransferSpectrumTable.pseudo_CrossSection[mode] : -log(change);
+      dColumnDensity * RadiativeTransferSpectrumTable.pseudo_CrossSection[bin] : -logf(change);
 
     /* return photon_fraction */
 
     if (tau > 2.e1) 
-      photon_fraction = (1.0+BFLOAT_EPSILON);
+      result[bin] = (1.0+BFLOAT_EPSILON);
     else if (tau > 1.e-4) 
-      photon_fraction = min(1 - frac_out / frac_in, 1.0);
+      result[bin] = min(1.0f - frac_out / frac_in, 1.0f);
     else
-      photon_fraction = min(dColumnDensity * RadiativeTransferSpectrumTable.pseudo_CrossSection[mode], 1.0);  
+      result[bin] = min(dColumnDensity * RadiativeTransferSpectrumTable.pseudo_CrossSection[bin], 1.0f);
+
+  } // ENDFOR bin
 
 //    if (index_in==0 && index_out==0)
 //    fprintf(stderr, "RVFST: id_in = %d, id_out = %d, f_in =%f(%g), f_out = %f(%g), tau = %f, photon_f = %f\n", 
 //	    index_in, index_out, frac_in, ColumnDensity, frac_out, ColumnDensity+dColumnDensity, tau, photon_fraction); 
 
-    return photon_fraction;
-
-  } else {
-    ENZO_FAIL("Unreconized Mode!\n");
-  }
-
-
-
-
-
-#ifdef TEST_WITH_FORMULA  // this was for test
-
-  mean_energy = 2000;  
-
-  if (mode == 3) {
-
-    return mean_energy;
-
-  } else if (mode >= 0 && mode <= 2) {
-
-    // optical depth of ray segment (by HI, note that dColumnDensity already has LengthUnits in it)
-
-    float tau = dColumnDensity * FindCrossSection(0, mean_energy);
+  /* find mean energy */
   
-    // calculate the fraction of photons absorbed at this column density
-    if (tau > 2.e1) 
-      photon_fraction = (1.0+BFLOAT_EPSILON);
-    else if (tau > 1.e-4) 
-      photon_fraction = min((1-expf(-tau)), 1.0);
-    else
-      photon_fraction = min(tau, 1.0);  
+  result[3] = RadiativeTransferSpectrumTable.meanenergy_table[index_in];
 
-    return photon_fraction;
-
-  } else {
-
-    ENZO_FAIL("ReturnValuesFromSpectrumTable: mode unrecognized\n");
-
-
-  }
-
-#endif
-
+  return SUCCESS;
 
 }
 
 #endif
+

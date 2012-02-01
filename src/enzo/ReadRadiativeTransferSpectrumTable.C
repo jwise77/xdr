@@ -28,14 +28,15 @@
 #include "global_data.h"
 #include "CosmologyParameters.h"
 
-int ReadRadiativeTransferSpectrumTable(float TemperatureUnits, float LengthUnits, 
-				       float aUnits, float DensityUnits, float TimeUnits)
+int ReadRadiativeTransferSpectrumTable(void)
 {
+
+  if (RadiativeTransferTraceSpectrum == FALSE)
+    return SUCCESS;
 
   FILE *fptr;
   char line[MAX_LINE_LENGTH];
   int i, nbins;
-  float TemperatureRange[2];
 
   // open the file
 
@@ -95,7 +96,6 @@ int ReadRadiativeTransferSpectrumTable(float TemperatureUnits, float LengthUnits
        RadiativeTransferSpectrumTable.columndensity_table[0]);
 
   fclose(fptr);
-
 
 #ifdef OUTPUT_SPECTRUM_FOR_CHECK
   // Write out the spectrum table for check
