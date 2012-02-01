@@ -159,10 +159,16 @@ const field_type
   /* Number of ray segments for ray tracing load balancing */
   RaySegments     = 94,
 
-/* Metals from Type Ia SNe */
+  /* Metals from Type Ia SNe */
   MetalSNIaDensity = 95,
 
-  FieldUndefined  = 96;
+  /* Column density field for internal use */
+  ColumnDensity   = 96,
+
+  /* X-ray flux field for the XDR cooling function */
+  XRayFlux        = 97,
+
+  FieldUndefined  = 98;
    
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -175,7 +181,7 @@ enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
                  FieldUndefined};
 */
 
-#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3)) ? FALSE : TRUE)
+#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= ColumnDensity && (A) <= XRayFlux) || ((A) >= Bfield1 && (A) <= AccelerationField3)) ? FALSE : TRUE)
 #define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? TRUE : FALSE)
 #define FieldTypeNoInterpolate(A) (((((A) >= Mach) && ((A) <= PreShockDensity)) || ((A) == GravPotential)) ? TRUE : FALSE)
 
