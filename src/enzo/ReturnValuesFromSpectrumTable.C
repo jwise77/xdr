@@ -135,6 +135,9 @@ int ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
   
   result[3] = RadiativeTransferSpectrumTable.meanenergy_table[index_in];
 
+//  printf("RVFST: %g %g, values = %g %g %g %g\n", ColumnDensity, dColumnDensity,
+//	 result[0], result[1], result[2], result[3]);
+
   return SUCCESS;
 
 }

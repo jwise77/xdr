@@ -174,7 +174,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 
     if ((PP->CurrentTime) < EndTime) {
       WalkPhotonPackage(&PP,
-			&MoveToGrid, ParentGrid, CurrentGrid, Grids0, nGrids0,
+			&MoveToGrid, ParentGrid, 
 			DensNum, DeNum, HINum, HeINum, HeIINum, H2INum,
 			kphHINum, gammaNum, kphHeINum, 
 			kphHeIINum, kdissH2INum, RPresNum1,

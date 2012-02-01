@@ -367,8 +367,7 @@ int TraceRay(int NumberOfSegments,
 /* Walk Photon Package one by one */ 
 
 int WalkPhotonPackage(PhotonPackageEntry **PP, 
-		      grid **MoveToGrid, grid *ParentGrid, grid *CurrentGrid,
-		      grid **Grids0, int nGrids0,
+		      grid **MoveToGrid, grid *ParentGrid,
 		      int DensNum, int DeNum, int HINum, int HeINum,
 		      int HeIINum, int H2INum,
 		      int kphHINum, int gammaNum,
