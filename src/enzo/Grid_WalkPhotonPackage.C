@@ -36,14 +36,12 @@
 
 int SplitPhotonPackage(PhotonPackageEntry *PP);
 FLOAT FindCrossSection(int type, float energy);
-float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity, int mode);
 int ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
 				  float result[]);
-float test_fn(int mode);
 
 int grid::WalkPhotonPackage(PhotonPackageEntry **PP, 
-			    grid **MoveToGrid, grid *ParentGrid, grid *CurrentGrid, 
-			    grid **Grids0, int nGrids0, int DensNum, int DeNum,
+			    grid **MoveToGrid, grid *ParentGrid, 
+			    int DensNum, int DeNum,
 			    int HINum, int HeINum, int HeIINum, int H2INum, 
 			    int kphHINum, int gammaNum, int kphHeINum, 
 			    int kphHeIINum, int kdissH2INum, int RPresNum1, 
@@ -74,6 +72,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   float DomainWidth[3], dx, dx2, dxhalf, fraction;
   float shield1, shield2, solid_angle, midpoint, nearest_edge;
   float tau_delete, flux_floor, avg_energy, dColumnDensity;
+  float values[4];
   double dN;
   FLOAT radius, oldr, cdt, dr;
   FLOAT CellVolume = 1, Volume_inv, Area_inv, SplitCriteron, SplitWithinRadius;
@@ -230,7 +229,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     nSecondaryHeII = (*PP)->Energy / 24.6; 
   } else if ((*PP)->Type == 5) {
     for (i = 0; i < 3; i++)
-      sigma[i] = FindCrossSection(i, (*PP)->Energy) * LengthUnits;
+      sigma[i] = RadiativeTransferSpectrumTable.pseudo_CrossSection[i] * 
+	LengthUnits;
   }
 
   // absorb sigma into constant
@@ -698,7 +698,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       // at the moment, secondary ionization is ignored (Alvarez & Kim 2010)
     case 5:
 
-      float values[4];
       dP = dN = 0.0;
       for (i = 0; i < 4; i++) dPXray[i] = 0.0;
 
@@ -792,7 +791,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
     // return in case we're out of photons
     if ((*PP)->Photons < tiny_number || 
-	(*PP)->ColumnDensity > tau_delete) {
+	((*PP)->ColumnDensity > tau_delete && type != 5)) {
       if (DEBUG>1) {
 	fprintf(stderr, "PP-Photons: %"GSYM"  PP->Radius: %"GSYM
 		"PP->CurrentTime: %"FSYM"\n",
