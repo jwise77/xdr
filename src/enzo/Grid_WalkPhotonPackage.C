@@ -72,7 +72,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   float DomainWidth[3], dx, dx2, dxhalf, fraction;
   float shield1, shield2, solid_angle, midpoint, nearest_edge;
   float tau_delete, flux_floor, avg_energy, dColumnDensity;
-  float values[4];
+  float values[4], XRayUnits;
   double dN;
   FLOAT radius, oldr, cdt, dr;
   FLOAT CellVolume = 1, Volume_inv, Area_inv, SplitCriteron, SplitWithinRadius;
@@ -728,6 +728,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       // update column density
       (*PP)->ColumnDensity += dColumnDensity;
 
+      (*PP)->Energy = values[3];
+
       // find the total absorbed number of photons 
       for (i = 0; i < 4; i++) dP += dPXray[i];
 
@@ -766,9 +768,11 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
     /* Flux entering the cell */
 
-    if (RadiativeTransferXDRCooling)
+    if (RadiativeTransferXDRCooling) {
       if (type == 4 || type == 5)
-	BaryonField[XFluxNum][index] += (*PP)->Photons * slice_factor2;
+	BaryonField[XFluxNum][index] += erg_eV * (*PP)->Photons * factor1 *
+	  slice_factor2 * (*PP)->Energy;
+    }
 
     /* Update ray properties */
 	
