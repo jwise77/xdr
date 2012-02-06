@@ -101,11 +101,12 @@ int grid::FinalizeRadiationFields(void)
 
   if (RadiativeTransferXDRCooling) {
     float CellAreaInv = 1.0/(CellWidth[0][0] * CellWidth[1][0]);
+    float XrayUnits = CellAreaInv * LengthUnits / TimeUnits;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
 	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
-	  BaryonField[XFluxNum][index] *= CellAreaInv;
+	  BaryonField[XFluxNum][index] *= XrayUnits;
 	} // ENDFOR i
       } // ENDFOR j
   }
